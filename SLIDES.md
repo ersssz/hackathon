@@ -113,9 +113,9 @@ Audit runtime: **~60 seconds, ~$0.02 per model.**
 
 ## Thank you
 
-**GitHub:** `github.com/yerassyl-1/ZeroTrust-AI`
+**GitHub:** `github.com/ersssz/hackathon`
 
-**Stack:** Python · Streamlit · Fireworks.ai (GLM, Kimi) · Anthropic SDK · Pydantic
+**Stack:** Python 3.11 · Streamlit · Plotly · Pydantic v2 · OpenAI-compatible adapter (Fireworks GLM/Kimi/Qwen/Gemma/MiniMax) · ThreadPoolExecutor
 
 Built during ICCSDFAI 2026 Hackathon with AI assistance, as permitted by the rules.
 

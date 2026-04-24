@@ -75,8 +75,8 @@ Full diagram and module map in [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ```powershell
 # 1. Clone
-git clone https://github.com/yerassyl-1/ZeroTrust-AI.git
-cd ZeroTrust-AI
+git clone https://github.com/ersssz/hackathon.git
+cd hackathon
 
 # 2. Create a virtual environment (use python.org CPython, not MSYS2)
 python -m venv .venv

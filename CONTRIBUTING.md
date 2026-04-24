@@ -6,8 +6,8 @@ so there are rough edges to sand down and directions to explore.
 ## Dev setup
 
 ```powershell
-git clone https://github.com/yerassyl-1/ZeroTrust-AI.git
-cd ZeroTrust-AI
+git clone https://github.com/ersssz/hackathon.git
+cd hackathon
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements-dev.txt
