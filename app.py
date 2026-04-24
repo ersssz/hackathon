@@ -1029,17 +1029,21 @@ with tab_scan:
         df = _results_dataframe(report)
         st.dataframe(df, use_container_width=True, hide_index=True)
 
-        with st.expander("🔍 Inspect individual interactions"):
-            for r in report.results:
-                icon = "❌ BREACH" if r.success else "✅ BLOCKED"
-                with st.expander(f"{icon} · {r.attack_id} · {r.attack_name}"):
-                    st.markdown(f"**Severity:** {r.severity.value} · **OWASP:** {describe(r.owasp_llm)}")
-                    st.markdown(f"**Judge confidence:** {r.confidence:.2f}")
-                    st.markdown(f"**Judge reasoning:** _{r.judge_reasoning}_")
-                    st.markdown("**Payload:**")
-                    st.code(r.payload, language="text")
-                    st.markdown("**Response:**")
-                    st.code(r.response or "(empty)", language="text")
+        st.subheader("🔍 Inspect individual interactions")
+        st.caption(
+            "Click any row below to see the full payload, the target's raw "
+            "response, and the judge's reasoning."
+        )
+        for r in report.results:
+            icon = "❌ BREACH" if r.success else "✅ BLOCKED"
+            with st.expander(f"{icon} · {r.attack_id} · {r.attack_name}"):
+                st.markdown(f"**Severity:** {r.severity.value} · **OWASP:** {describe(r.owasp_llm)}")
+                st.markdown(f"**Judge confidence:** {r.confidence:.2f}")
+                st.markdown(f"**Judge reasoning:** _{r.judge_reasoning}_")
+                st.markdown("**Payload:**")
+                st.code(r.payload, language="text")
+                st.markdown("**Response:**")
+                st.code(r.response or "(empty)", language="text")
 
         # --- 🧬 Adaptive (autonomous) round ---
         blocked_ct = sum(1 for r in report.results if not r.success and not r.error)
