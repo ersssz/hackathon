@@ -1,4 +1,10 @@
+# --- secrets ---
 .env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# --- python ---
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -6,9 +12,18 @@ __pycache__/
 venv/
 env/
 .pytest_cache/
-.streamlit/secrets.toml
+.coverage
+htmlcov/
+
+# --- runtime output ---
 reports/
 *.log
+
+# --- internal docs (not part of public submission) ---
+TEAMMATE_CHECKLIST.md
+
+# --- editors / os ---
 .idea/
 .vscode/
 .DS_Store
+Thumbs.db

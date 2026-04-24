@@ -1,4 +1,4 @@
-# LLMSentinel — Architecture
+# ZeroTrust-AI — Architecture
 
 ## High-level flow
 

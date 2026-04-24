@@ -32,8 +32,17 @@ def load_attacks(
     attacks: list[Attack] = []
     for yaml_file in sorted(root.glob("*.yaml")):
         with yaml_file.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
-        for item in data.get("attacks", []):
+            data = yaml.safe_load(f)
+        # Support both layouts:
+        #   1) {"attacks": [ {...}, {...} ]}      (legacy)
+        #   2) [ {...}, {...} ]                   (flat list, used by new YAMLs)
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict):
+            items = data.get("attacks", [])
+        else:
+            items = []
+        for item in items:
             atk = Attack(**item)
             if categories is None or atk.category in categories:
                 attacks.append(atk)

@@ -1,7 +1,7 @@
 """A deliberately vulnerable customer-support chatbot for the demo.
 
-The system prompt contains confidential fields and weak guardrails, so LLMSentinel
-should be able to exploit it convincingly during the live demo.
+The system prompt contains confidential fields and weak guardrails, so
+ZeroTrust-AI should be able to exploit it convincingly during the live demo.
 """
 from __future__ import annotations
 

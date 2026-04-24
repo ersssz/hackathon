@@ -1,4 +1,4 @@
-"""Pydantic data models used across LLMSentinel."""
+"""Pydantic data models used across ZeroTrust-AI."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -14,6 +14,10 @@ class AttackCategory(str, Enum):
     SYSTEM_LEAK = "system_leak"
     DATA_EXFIL = "data_exfil"
     HARMFUL_CONTENT = "harmful_content"
+    HALLUCINATION = "hallucination"
+    ENCODING_BYPASS = "encoding_bypass"
+    MULTITURN_MANIPULATION = "multiturn_manipulation"
+    INDIRECT_INJECTION = "indirect_injection"
 
 
 class Severity(str, Enum):

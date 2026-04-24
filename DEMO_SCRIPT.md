@@ -1,4 +1,4 @@
-# LLMSentinel — Demo Script
+# ZeroTrust-AI — Demo Script
 
 **Total duration: 6 minutes** (+ 2-3 minutes of Q&A).
 Target: ICCSDFAI 2026 Hackathon jury.
@@ -19,10 +19,11 @@ Target: ICCSDFAI 2026 Hackathon jury.
 
 ## 0:30 — 1:30 · What it does (1 minute)
 
-> "**LLMSentinel** is an AI-powered LLM vulnerability scanner. It works in three
+> "**ZeroTrust-AI** is an AI-powered LLM vulnerability scanner. It works in three
 > steps:
-> 1. We curated an **attack library** of 21 adversarial prompts across 5 categories,
->    each mapped to OWASP LLM Top 10.
+> 1. We curated an **attack library** of 51 adversarial prompts across 9 categories — including encoding-bypass, multi-turn crescendo, and indirect injection — all mapped to OWASP LLM Top 10, NIST AI RMF, and MITRE ATLAS
+>    (prompt injection, jailbreak, system-prompt leak, data exfiltration, harmful
+>    content, hallucination), each mapped to OWASP LLM Top 10.
 > 2. The **orchestrator** fires every attack at a target LLM.
 > 3. The key innovation: a **second, stronger LLM acts as the Judge** — it reads
 >    each response and decides whether the attack succeeded. No brittle regex,
@@ -55,9 +56,10 @@ markers appear in real time.
     this proves the judge works.
 
 **Step 4 (30 sec):** Switch to **Compare models** tab with results from a prior
-comparison run. Show that Llama 3.1 8B breaches X times, but Llama 3.3 70B only
-Y times. "Our tool answers the production question: *which model is safe enough
-to ship?*"
+comparison run. Show that GLM 5 breaches X times, but Kimi K2.6 only Y times.
+"Our tool answers the production question: *which model is safe enough to
+ship?* — and with **cross-family judging** (Kimi judges GLM, GLM judges Kimi)
+we eliminate same-family bias in the verdict."
 
 ---
 
@@ -65,7 +67,7 @@ to ship?*"
 
 **Three novel contributions — match the rubric.**
 
-> "Three things make LLMSentinel different from what exists today:
+> "Three things make ZeroTrust-AI different from what exists today:
 >
 > **1. LLM-as-Judge.** Traditional scanners match regex on the response.
 > That misses paraphrased compliance, partial obedience, obfuscation. Our judge
@@ -84,7 +86,8 @@ to ship?*"
 ## 5:00 — 5:45 · Technical & practical fit (45 sec)
 
 > "Built in **6 hours** during this hackathon, with AI assistance — consistent
-> with the rules. Stack: Python, Streamlit, Fireworks.ai, Pydantic.
+> with the rules. Stack: Python, Streamlit, Fireworks.ai (GLM & Kimi models),
+> Anthropic SDK (optional Claude), Pydantic.
 >
 > Fully open-source. A security team can point it at their staging chatbot,
 > run a campaign, get a Markdown report to paste into Jira in under 5 minutes.
@@ -98,7 +101,7 @@ to ship?*"
 ## 5:45 — 6:00 · Close (15 sec)
 
 > "In 2026, you wouldn't ship a web app without a vulnerability scanner. Soon
-> you won't ship an LLM app without one either. **LLMSentinel** is that
+> you won't ship an LLM app without one either. **ZeroTrust-AI** is that
 > scanner. Thank you — questions?"
 
 ---
@@ -107,7 +110,7 @@ to ship?*"
 
 **Q: Why not use existing tools like Garak / PyRIT?**
 A: Great question. Garak and PyRIT are researcher-oriented — huge config, CLI-heavy,
-produce log files, no scoring metric, no deployment-decision workflow. LLMSentinel is
+produce log files, no scoring metric, no deployment-decision workflow. ZeroTrust-AI is
 product-oriented: a PM or red-teamer opens a browser, clicks one button, gets a report
 they can paste into a ticket. We are complementary, not competitive. Our **Judge +
 LVSS + multi-model comparison** are novel contributions.

@@ -1,4 +1,4 @@
-# LLMSentinel — Slide deck (copy into Google Slides)
+# ZeroTrust-AI — Slide deck (copy into Google Slides)
 
 **8 slides total.** Copy each block into a separate Google Slides page. Use a
 dark theme, one headline per slide, big typography, minimal text.
@@ -7,7 +7,7 @@ dark theme, one headline per slide, big typography, minimal text.
 
 ## Slide 1 — Title
 
-# 🛡️ LLMSentinel
+# 🛡️ ZeroTrust-AI
 
 ### AI-powered LLM Vulnerability Scanner
 
@@ -30,15 +30,16 @@ dark theme, one headline per slide, big typography, minimal text.
 
 ## Slide 3 — Our solution
 
-## LLMSentinel
+## ZeroTrust-AI
 
 One-click LLM red-teaming for product teams.
 
-- **21 adversarial attacks** across 5 categories
+- **51 adversarial attacks** across **9 categories** (prompt-injection, jailbreak, system-leak, data-exfil, harmful, hallucination, **encoding-bypass, multi-turn, indirect injection**)
 - Mapped to **OWASP LLM Top 10 (2025)**
 - **LLM-as-Judge** evaluator (not regex)
+- **Adaptive autonomous loop** — generator LLM rewrites blocked attacks
 - Single-number **LVSS severity score (0–10)**
-- Side-by-side model comparison
+- Side-by-side model comparison + recommended mitigations
 - Markdown report for Jira / CISO
 
 ---
@@ -66,9 +67,10 @@ Attack Library (YAML) ─► Orchestrator ─► Target LLM
 
 ## Three things nobody else has
 
-### 1. LLM-as-Judge
-A reasoning model (Llama 70B) decides success/failure — understands paraphrased
-compliance, partial obedience, obfuscation.
+### 1. LLM-as-Judge (cross-family)
+A reasoning model (GLM 5.1 / Kimi K2.6) decides success/failure — understands
+paraphrased compliance, partial obedience, obfuscation. We use a **different
+model family** as judge to avoid same-family bias.
 
 ### 2. LVSS score
 Severity-weighted 0–10 metric. One number your PM understands.
@@ -111,9 +113,9 @@ Audit runtime: **~60 seconds, ~$0.02 per model.**
 
 ## Thank you
 
-**GitHub:** `github.com/<team>/llm-sentinel`
+**GitHub:** `github.com/yerassyl-1/ZeroTrust-AI`
 
-**Stack:** Python · Streamlit · Fireworks.ai · Pydantic
+**Stack:** Python · Streamlit · Fireworks.ai (GLM, Kimi) · Anthropic SDK · Pydantic
 
 Built during ICCSDFAI 2026 Hackathon with AI assistance, as permitted by the rules.
 
