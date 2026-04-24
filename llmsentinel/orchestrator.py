@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Callable, Optional
 
-from .adapters import FireworksAdapter
+from .adapters import LLMAdapter
 from .evaluator import LLMJudge
 from .models import Attack, AttackResult, CampaignReport
 
@@ -17,7 +17,7 @@ class Campaign:
 
     def __init__(
         self,
-        adapter: FireworksAdapter,
+        adapter: LLMAdapter,
         target_model: str,
         judge: LLMJudge,
         target_system_prompt: Optional[str] = None,

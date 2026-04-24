@@ -13,7 +13,12 @@ import plotly.express as px
 import streamlit as st
 from dotenv import load_dotenv
 
-from llmsentinel.adapters import FIREWORKS_MODELS, FireworksAdapter
+from llmsentinel.adapters import (
+    ANTHROPIC_MODELS,
+    FIREWORKS_MODELS,
+    build_adapter,
+    models_for,
+)
 from llmsentinel.attacks import load_attacks
 from llmsentinel.evaluator import LLMJudge
 from llmsentinel.models import AttackCategory, CampaignReport
@@ -21,6 +26,9 @@ from llmsentinel.orchestrator import Campaign
 from llmsentinel.owasp import OWASP_LLM_TOP10, describe
 from llmsentinel.report import render_comparison_markdown, render_markdown
 from vulnerable_bot.bot import VULNERABLE_SYSTEM_PROMPT
+
+
+PROVIDERS = ["fireworks", "anthropic"]
 
 
 load_dotenv()
@@ -69,30 +77,71 @@ with st.sidebar:
     st.caption("ICCSDFAI 2026 · Case 12")
 
     st.divider()
-    st.subheader("⚙️ Configuration")
+    st.subheader("🔑 API keys")
 
-    api_key_input = st.text_input(
+    fireworks_key = st.text_input(
         "Fireworks.ai API key",
         value=os.getenv("FIREWORKS_API_KEY", ""),
         type="password",
-        help="Get yours at https://fireworks.ai",
+        help="Required for Llama / Mixtral / Qwen / DeepSeek targets.",
+    )
+    anthropic_key = st.text_input(
+        "Anthropic API key (optional)",
+        value=os.getenv("ANTHROPIC_API_KEY", ""),
+        type="password",
+        help="Enables Claude models as target or judge.",
     )
 
-    model_names = list(FIREWORKS_MODELS.keys())
-    default_target = "Llama 3.1 8B" if "Llama 3.1 8B" in model_names else model_names[0]
-    default_judge = (
-        "Llama 3.1 70B" if "Llama 3.1 70B" in model_names else model_names[-1]
+    st.divider()
+    st.subheader("🎯 Target (model under test)")
+    target_provider = st.selectbox(
+        "Provider",
+        PROVIDERS,
+        index=0,
+        key="target_provider",
     )
-
+    target_models_map = models_for(target_provider)
+    target_model_names = list(target_models_map.keys())
+    default_target_idx = 0
     target_display = st.selectbox(
-        "🎯 Target model (under test)",
-        model_names,
-        index=model_names.index(default_target),
+        "Model",
+        target_model_names,
+        index=default_target_idx,
+        key="target_model_name",
     )
+
+    st.subheader("⚖️ Judge (evaluator)")
+    judge_provider_default = 1 if anthropic_key else 0
+    judge_provider = st.selectbox(
+        "Provider",
+        PROVIDERS,
+        index=judge_provider_default,
+        key="judge_provider",
+        help=(
+            "Tip: using a different provider for the judge (e.g. Claude) than the "
+            "target (e.g. Llama) avoids same-family bias in verdicts."
+        ),
+    )
+    judge_models_map = models_for(judge_provider)
+    judge_model_names = list(judge_models_map.keys())
+    # Default to strongest judge if available
+    preferred_judges = [
+        "Claude Opus 4.7",
+        "Claude Opus 4.5",
+        "Claude Sonnet 4.5",
+        "Llama 3.3 70B",
+        "Llama 3.1 70B",
+    ]
+    default_judge_idx = 0
+    for preferred in preferred_judges:
+        if preferred in judge_model_names:
+            default_judge_idx = judge_model_names.index(preferred)
+            break
     judge_display = st.selectbox(
-        "⚖️ Judge model (evaluator)",
-        model_names,
-        index=model_names.index(default_judge),
+        "Model",
+        judge_model_names,
+        index=default_judge_idx,
+        key="judge_model_name",
     )
 
     st.divider()
@@ -126,10 +175,27 @@ st.markdown(
 
 
 # ---------- helpers ----------
-def _build_stack(api_key: str, judge_model_id: str) -> tuple[FireworksAdapter, LLMJudge]:
-    adapter = FireworksAdapter(api_key=api_key)
-    judge = LLMJudge(adapter=adapter, model=judge_model_id)
-    return adapter, judge
+def _key_for(provider: str) -> str:
+    return fireworks_key if provider == "fireworks" else anthropic_key
+
+
+def _validate_keys_for_run() -> str | None:
+    """Return an error string if required keys are missing, else None."""
+    needed_providers = {target_provider, judge_provider}
+    if "fireworks" in needed_providers and not fireworks_key:
+        return "Fireworks.ai API key is required for the selected target/judge."
+    if "anthropic" in needed_providers and not anthropic_key:
+        return "Anthropic API key is required for the selected target/judge."
+    return None
+
+
+def _build_stack() -> tuple:
+    """Build (target_adapter, judge) using current sidebar state."""
+    target_adapter = build_adapter(target_provider, _key_for(target_provider))
+    judge_adapter = build_adapter(judge_provider, _key_for(judge_provider))
+    judge_model_id = models_for(judge_provider)[judge_display]
+    judge = LLMJudge(adapter=judge_adapter, model=judge_model_id)
+    return target_adapter, judge
 
 
 def _get_attacks():
@@ -235,7 +301,7 @@ def _lvss_banner(report: CampaignReport) -> None:
 
 
 def _run_campaign(
-    adapter: FireworksAdapter,
+    adapter,
     judge: LLMJudge,
     target_model_id: str,
     system_prompt: str | None,
@@ -291,23 +357,25 @@ tab_scan, tab_compare, tab_demo, tab_report, tab_about = st.tabs(
 with tab_scan:
     st.subheader("Run adversarial campaign on a single target model")
     st.caption(
-        f"Target: **{target_display}** · Judge: **{judge_display}** · "
+        f"Target: **{target_display}** ({target_provider}) · "
+        f"Judge: **{judge_display}** ({judge_provider}) · "
         f"Attacks selected: **{len(_get_attacks())}**"
     )
 
     run_btn = st.button("🚀 Launch campaign", type="primary", use_container_width=True)
 
     if run_btn:
-        if not api_key_input:
-            st.error("API key is required.")
+        err = _validate_keys_for_run()
+        if err:
+            st.error(err)
         else:
             try:
-                adapter, judge = _build_stack(api_key_input, FIREWORKS_MODELS[judge_display])
+                adapter, judge = _build_stack()
                 with st.spinner("Running..."):
                     report = _run_campaign(
                         adapter=adapter,
                         judge=judge,
-                        target_model_id=FIREWORKS_MODELS[target_display],
+                        target_model_id=target_models_map[target_display],
                         system_prompt=custom_system.strip() or None,
                     )
                 if report is not None:
@@ -351,13 +419,28 @@ with tab_scan:
 with tab_compare:
     st.subheader("Run the same attack suite on multiple models side-by-side")
     st.caption(
-        "Use this to decide which model is safe enough for your production chatbot."
+        "Use this to decide which model is safe enough for your production chatbot. "
+        "Models can come from different providers — mix Fireworks and Anthropic freely."
     )
 
-    models_to_compare = st.multiselect(
+    compare_options: list[tuple[str, str, str]] = []  # (label, provider, model_id)
+    for name, model_id in FIREWORKS_MODELS.items():
+        compare_options.append((f"[Fireworks] {name}", "fireworks", model_id))
+    for name, model_id in ANTHROPIC_MODELS.items():
+        compare_options.append((f"[Anthropic] {name}", "anthropic", model_id))
+
+    compare_labels = [o[0] for o in compare_options]
+    default_compare = [
+        l for l in compare_labels
+        if l in ("[Fireworks] Llama 3.1 8B", "[Fireworks] Llama 3.1 70B")
+    ]
+    if not default_compare:
+        default_compare = compare_labels[:2]
+
+    chosen_labels = st.multiselect(
         "Select models to compare",
-        options=list(FIREWORKS_MODELS.keys()),
-        default=["Llama 3.1 8B", "Llama 3.1 70B"],
+        options=compare_labels,
+        default=default_compare,
     )
 
     compare_btn = st.button(
@@ -365,30 +448,44 @@ with tab_compare:
     )
 
     if compare_btn:
-        if not api_key_input:
-            st.error("API key is required.")
-        elif not models_to_compare:
+        err = _validate_keys_for_run()
+        chosen = [o for o in compare_options if o[0] in chosen_labels]
+        needed = {prov for _, prov, _ in chosen}
+        if "fireworks" in needed and not fireworks_key:
+            err = err or "Fireworks.ai API key is required."
+        if "anthropic" in needed and not anthropic_key:
+            err = err or "Anthropic API key is required."
+        if err:
+            st.error(err)
+        elif not chosen:
             st.warning("Pick at least one model.")
         else:
             try:
-                adapter = FireworksAdapter(api_key=api_key_input)
-                judge = LLMJudge(adapter=adapter, model=FIREWORKS_MODELS[judge_display])
+                judge_adapter = build_adapter(judge_provider, _key_for(judge_provider))
+                judge = LLMJudge(
+                    adapter=judge_adapter,
+                    model=models_for(judge_provider)[judge_display],
+                )
                 reports: list[CampaignReport] = []
-                for m in models_to_compare:
-                    st.write(f"▶ Testing **{m}**...")
-                    with st.spinner(f"Attacking {m}..."):
-                        rep = _run_campaign(
-                            adapter=adapter,
-                            judge=judge,
-                            target_model_id=FIREWORKS_MODELS[m],
-                            system_prompt=custom_system.strip() or None,
-                        )
-                    if rep is not None:
-                        reports.append(rep)
-                        st.success(
-                            f"{m}: {rep.successful_attacks}/{rep.total_attacks} breaches · "
-                            f"LVSS {rep.lvss_score}"
-                        )
+                for label, prov, model_id in chosen:
+                    st.write(f"▶ Testing **{label}**...")
+                    try:
+                        target_adapter = build_adapter(prov, _key_for(prov))
+                        with st.spinner(f"Attacking {label}..."):
+                            rep = _run_campaign(
+                                adapter=target_adapter,
+                                judge=judge,
+                                target_model_id=model_id,
+                                system_prompt=custom_system.strip() or None,
+                            )
+                        if rep is not None:
+                            reports.append(rep)
+                            st.success(
+                                f"{label}: {rep.successful_attacks}/{rep.total_attacks} "
+                                f"breaches · LVSS {rep.lvss_score}"
+                            )
+                    except Exception as model_exc:  # noqa: BLE001
+                        st.warning(f"{label} failed: {model_exc}")
                 st.session_state.last_comparison = reports
             except Exception as exc:  # noqa: BLE001
                 st.exception(exc)
@@ -444,18 +541,17 @@ with tab_demo:
     )
 
     if st.button("💥 Attack ShopBot", type="primary", use_container_width=True):
-        if not api_key_input:
-            st.error("API key is required.")
+        err = _validate_keys_for_run()
+        if err:
+            st.error(err)
         else:
             try:
-                adapter, judge = _build_stack(
-                    api_key_input, FIREWORKS_MODELS[judge_display]
-                )
+                adapter, judge = _build_stack()
                 with st.spinner("ShopBot is under attack..."):
                     report = _run_campaign(
                         adapter=adapter,
                         judge=judge,
-                        target_model_id=FIREWORKS_MODELS[target_display],
+                        target_model_id=target_models_map[target_display],
                         system_prompt=VULNERABLE_SYSTEM_PROMPT,
                     )
                 if report is not None:

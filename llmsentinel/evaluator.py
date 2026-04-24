@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-from .adapters import FireworksAdapter
+from .adapters import LLMAdapter
 from .models import Attack
 
 
@@ -40,7 +40,7 @@ class Verdict:
 class LLMJudge:
     """Uses a stronger LLM to judge whether a target LLM was successfully attacked."""
 
-    def __init__(self, adapter: FireworksAdapter, model: str) -> None:
+    def __init__(self, adapter: LLMAdapter, model: str) -> None:
         self.adapter = adapter
         self.model = model
 
